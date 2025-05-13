@@ -32,7 +32,7 @@ install.packages("Matrix")
 
 ```{r}
 getExampleData()                       # Download example dataset (~200 MB)
-seu = readRDS("/Users/layteng/Library/CloudStorage/Box-Box/Loh Lab DropBox Files/Kairos/Kevin_scRNA_figures_2025/Kairos_sortedcells_UMAP_04042025_KJL.rds")
+seu = readRDS("/Users/layteng/Library/CloudStorage/Box-Box/Loh_Lab_DropBox_Files/Kairos/Kevin_scRNA_figures_2025/Kairos_unsortedcells_05082025_KJL.rds")
 scConf = createConfig(seu)
 showLegend(scConf)
 
@@ -45,42 +45,43 @@ scConf = modMetaName(scConf,
 showLegend(scConf)
 
 
-# Modify colours and labels
-scConf = modColours(scConf, meta.to.mod = "seurat_clusters", 
-                    new.colours= c("#696969","#660066","#8064A2","#F79646","#D0CD3E","#FF0000"))
 
 scConf = modColours(scConf, meta.to.mod = "orig.ident", 
-                    new.colours= c("#D0CD3E","#F79646","#FF0000","#8064A2","#660066","#696969"))
+                    new.colours= c("#D0CD3E","#F79646","#FF0404","#8064A2","#711271","#696969"))
 
 scConf = modLabels(scConf, meta.to.mod = "orig.ident", 
-                   new.labels = c("Day 1 Primitive Streak", "Day 2 Dorsal lateral mesoderm","Day 3 Artery EC", "Day 3 Prevein EC","Day 4 Vein EC","Undifferentiated H1"))
+                   new.labels = c("Day 1 Primitive Streak", "Day 2 Lateral mesoderm","Day 3 Artery EC", "Day 3 Prevein EC","Day 4 Vein EC","Undifferentiated H1"))
 
 
 class(scConf)
 
+# Modify colours and labels
+scConf = modColours(scConf, meta.to.mod = "seurat_clusters", 
+                    new.colours= c("#696969","#F79646","#711271","#FF0404","#D0CD3E","#8468A5","#33A02C","#33A02C"))
 
 scConf = modLabels(scConf, meta.to.mod = "seurat_clusters", 
-                   new.labels = c("Undifferentiated H1", "Day 4 Vein EC","Day 3 Prevein EC","Day 2 Dorsal lateral mesoderm","Day 1 Primitive Streak","Day 3 Artery EC"))
+                   new.labels = c("Undifferentiated H1", "Day 2 Lateral mesoderm","Day 4 Vein EC","Day 3 Artery EC", "Day 1 Primitive Streak","Day 3 Prevein EC","Mesenchymal","Mesenchymal"))
 
 showLegend(scConf)
 
 #open server.R in Rstudio, click on RunApp, set working directory
 #https://htmlpreview.github.io/?https://github.com/SGDDNB/ShinyCell/blob/master/docs/4cloud.html
 
+DimPlot(seu)
 sessionInfo()
 ```
 
 ```{r}
 
 #delete metadata
-scConf = delMeta(scConf, c("RNA_snn_res.0.1"))
+scConf = delMeta(scConf, c("RNA_snn_res.0.14"))
 ?addMeta
 showLegend(scConf)
 
 checkConfig(scConf, seu)
 
 citation = list(
-  author  = "Lay Teng Ang, Sherry Li Zheng, Kevin J. Liu, Anastasiia Masaltseva, et al.",
+  author  = "Lay Teng Ang, Sherry Li Zheng, Kevin J. Liu, Anastasiia Masaltseva,..., Kristy Red-Horse, Kyle M Loh",
   title   = "A human vascular differentiation roadmap reveals vein developmental origins and cellular effects of risk group 4 viruses",
   journal = "XX",
   volume  = "XX",
@@ -101,18 +102,21 @@ library(Seurat)
 
 seu <- UpdateSeuratObject(seu)
 
+DimPlot(seu)
+
 makeShinyApp(seu, scConf, gene.mapping = TRUE, gex.assay = "RNA", gex.slot = c("data","scale.data","counts"), shiny.title = "A human vascular differentiation roadmap",shiny.dir = "artery-vein-scRNA-seq/", shiny.footnotes = citation, default.gene1 = "CDH5", default.gene2 = "SOX17",default.multigene = c("CXCR4","EFNB2","DLL4", "UNC5B", "APLN","NR2F2","FLRT2","NT5E","APLNR")) 
 
 ```
 
 
 ```{r}
+rsconnect::setAccountInfo(name='anglab',
+			  token='4C0601656707199434CF8F8195466ACD',
+			  secret='f95DFF6vmBcQU/AB3iWd49dPF763lLdMyWinlJBY')
 
-rsconnect::setAccountInfo(name='anglab', token='B03405EB2F7887935D1507F272F7D552', secret='YVqNyUADcwRzMQRVk/Oj4/sqLGtY52BFhyexbQGk')
-setwd("/Users/layteng/Library/CloudStorage/Box-Box/Loh Lab DropBox Files/Kairos/Kevin_scRNA_figures_2025/")
-rsconnect::deployApp("/Users/layteng/Library/CloudStorage/Box-Box/Loh Lab DropBox Files/Kairos/Kevin_scRNA_figures_2025/artery-vein-scRNA-seq/")
+setwd("~/Library/CloudStorage/Box-Box/Loh_Lab_DropBox_Files/Kairos/Kevin_scRNA_figures_2025/artery-vein-scRNA-seq")
+rsconnect::deployApp("/Users/layteng/Library/CloudStorage/Box-Box/Loh_Lab_DropBox_Files/Kairos/Kevin_scRNA_figures_2025/artery-vein-scRNA-seq/")
 
 options(rsconnect.max.bundle.size = 5000000000)  # 5 GB, for example
 
 ```
-
