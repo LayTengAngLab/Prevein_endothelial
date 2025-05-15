@@ -1,0 +1,70 @@
+---
+title: "Chen Cir Res Prevein 2024"
+date: "2025-05-13"
+---
+
+```{r}
+e9.5_1 <- Read10X(data.dir = "/Users/layteng/Downloads/GSE216970_RAW/E9.5_1/")
+e9.5_2 <- Read10X(data.dir = "/Users/layteng/Downloads/GSE216970_RAW/E9.5_2/")
+
+e9.5_1 <- CreateSeuratObject(counts = e9.5_1, project = "mouse", min.cells = 3, min.features = 200)
+e9.5_2 <- CreateSeuratObject(counts = e9.5_2, project = "mouse", min.cells = 3, min.features = 200)
+
+e9.5_1[["percent.mt"]] <- PercentageFeatureSet(e9.5_1, pattern = "^mt-")
+e9.5_2[["percent.mt"]] <- PercentageFeatureSet(e9.5_2, pattern = "^mt-")
+
+VlnPlot(e9.5_1, features = "nCount_RNA", pt.size = 0.1) + NoLegend() #>999,000
+VlnPlot(e9.5_2, features = "nCount_RNA", pt.size = 0.1) + NoLegend() #>999,000
+VlnPlot(e9.5_1, features = "percent.mt", pt.size = 0.1) + NoLegend()
+VlnPlot(e9.5_2, features = "percent.mt", pt.size = 0.1) + NoLegend()
+VlnPlot(e9.5_1, features = "nFeature_RNA", pt.size = 0.1) + NoLegend()
+VlnPlot(e9.5_2, features = "nFeature_RNA", pt.size = 0.1) + NoLegend()#>5000
+
+e9.5_1 <- subset(e9.5_1, subset = nFeature_RNA > 2000 & nCount_RNA < 30000 & percent.mt < 10)
+e9.5_2 <- subset(e9.5_2, subset = nFeature_RNA > 500 & nCount_RNA < 50000 & percent.mt < 12.5)
+
+alldata <- merge(e9.5_1, c(e9.5_1), add.cell.ids=c("e9.5_1","e9.5_2"))
+
+VlnPlot(alldata, features = "nCount_RNA", pt.size = 0.1) + NoLegend() #200,000
+VlnPlot(alldata, features = "nFeature_RNA", pt.size = 0.1) + NoLegend()
+```
+
+```{r}
+alldata <- NormalizeData(alldata, normalization.method = "LogNormalize", scale.factor = 10000)
+alldata.genes <- rownames(alldata)
+alldata <- ScaleData(alldata, features = alldata.genes)
+
+VlnPlot(alldata, features = c("Cdh5"), pt.size = 0.1) + NoLegend()
+alldata <- subset(alldata, subset = Cdh5 > 1)
+
+alldata <- FindVariableFeatures(alldata, selection.method = "vst", nfeatures = 2000)
+alldata <- RunPCA(alldata, npcs = 100, ndims.print = 1:5, nfeatures.print = 5)
+ElbowPlot(alldata)
+alldata <- FindNeighbors(alldata, dims = 1:10)
+alldata <- FindClusters(alldata, resolution = 0.1)
+
+alldata <- RunUMAP(alldata, dims = 1:10)
+DimPlot(alldata, reduction = "umap",  label.size = 1, label.box=TRUE, group.by = "orig.ident")
+DimPlot(alldata, reduction = "umap",  label.size = 1, label.box=TRUE)
+DimPlot(alldata, reduction = "umap",  label.size = 1, pt.size=2, label.box=TRUE, cols=c("#8064A2","#696969","#FF0404","#d9cef2"))
+
+
+ggsave("/Users/layteng/Downloads/alldata_1.tiff", width =7, height=5)
+
+```
+
+```{r}
+
+FeaturePlot(alldata, features = c("Cdh5", "Cd34", "Pecam1", "Erg", "Dll4", "Sox17"), 
+            cols = c("#F0F0F0","#2962A5"), pt.size = 0.5)
+
+FeaturePlot(alldata, features = c("Etv2", "Apln", "Aplnr", "Nr2f2", "Flrt2", "Nt5e"), 
+            cols = c("#F0F0F0","#2962A5"), pt.size = 0.5)
+
+FeaturePlot(alldata, features = c("Gja4", "Gja5", "Unc5b", "Hey1", "Mecom", "Efnb2"), 
+            cols = c("#F0F0F0","#2962A5"), pt.size = 0.5)
+
+ggsave("/Users/layteng/Downloads/Chen_2024_featureplot0.5_4.tiff", width =5, height=5)
+
+```
+
