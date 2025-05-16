@@ -1,9 +1,8 @@
----
-title: "Chen Cir Res Prevein 2024"
-date: "2025-05-13"
----
+
 
 ```{r}
+
+library(Seurat)
 e9.5_1 <- Read10X(data.dir = "/Users/layteng/Downloads/GSE216970_RAW/E9.5_1/")
 e9.5_2 <- Read10X(data.dir = "/Users/layteng/Downloads/GSE216970_RAW/E9.5_2/")
 
@@ -30,6 +29,10 @@ VlnPlot(alldata, features = "nFeature_RNA", pt.size = 0.1) + NoLegend()
 ```
 
 ```{r}
+#alldata <- SCTransform(alldata, vars.to.regress = "percent.mt", new.assay.name = "SCT", verbose = FALSE)
+```
+
+```{r}
 alldata <- NormalizeData(alldata, normalization.method = "LogNormalize", scale.factor = 10000)
 alldata.genes <- rownames(alldata)
 alldata <- ScaleData(alldata, features = alldata.genes)
@@ -44,27 +47,98 @@ alldata <- FindNeighbors(alldata, dims = 1:10)
 alldata <- FindClusters(alldata, resolution = 0.1)
 
 alldata <- RunUMAP(alldata, dims = 1:10)
-DimPlot(alldata, reduction = "umap",  label.size = 1, label.box=TRUE, group.by = "orig.ident")
-DimPlot(alldata, reduction = "umap",  label.size = 1, label.box=TRUE)
-DimPlot(alldata, reduction = "umap",  label.size = 1, pt.size=2, label.box=TRUE, cols=c("#8064A2","#696969","#FF0404","#d9cef2"))
+DimPlot(alldata, reduction = "umap",  label.size = 2, label.box=TRUE, group.by = "orig.ident")
+DimPlot(alldata, reduction = "umap",  label.size = 2, pt.size=2, label.box=TRUE, cols=c("#F79646","#FF0404","#8064A2","#711271"))
 
-
-ggsave("/Users/layteng/Downloads/alldata_1.tiff", width =7, height=5)
 
 ```
 
 ```{r}
+library(ggplot2)
+ggsave("/Users/stanfordkevin/Downloads/chen_umap1.tiff", width =7, height=5)
 
-FeaturePlot(alldata, features = c("Cdh5", "Cd34", "Pecam1", "Erg", "Dll4", "Sox17"), 
-            cols = c("#F0F0F0","#2962A5"), pt.size = 0.5)
+levels(alldata)
+levels(alldata) <- c("1", "2", "0","3")
+levels(alldata)
+new.cluster.ids <- c("Pericyte", "Artery EC", "SMC","Vein EC")
+names(new.cluster.ids) <- levels(alldata)
+alldata <- RenameIdents(alldata, new.cluster.ids)
+DimPlot(alldata, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
 
-FeaturePlot(alldata, features = c("Etv2", "Apln", "Aplnr", "Nr2f2", "Flrt2", "Nt5e"), 
-            cols = c("#F0F0F0","#2962A5"), pt.size = 0.5)
+levels(alldata) <- c("Pericyte","SMC","Artery EC","Vein EC")
 
-FeaturePlot(alldata, features = c("Gja4", "Gja5", "Unc5b", "Hey1", "Mecom", "Efnb2"), 
-            cols = c("#F0F0F0","#2962A5"), pt.size = 0.5)
+FeaturePlot(alldata, features = c("Cdh5","Smad7","Unc5b","Etv2"), pt.size=0.5)
+FeaturePlot(alldata, features = c("Gja5", "Sox17", "Dll4", "Smad6"),pt.size=0.5)
+FeaturePlot(alldata, features = c("Nr2f2","Flrt2","Nrp2", "Aplnr"),pt.size=0.5)
+FeaturePlot(alldata, features = c("Gja5","Gja4","Efnb2", "Hey1"),pt.size=0.5)
+FeaturePlot(alldata, features = c("Pecam1","Stab2","Ephb4","Nrp1"), pt.size=0.5)
+FeaturePlot(alldata, features = c("Cdh5","Efnb2","Unc5b","Etv2","Gja5", "Sox17", "Dll4", "Ephb4","Nr2f2","Flrt2","Nrp2","Aplnr","Smad7", "Smad6","Hey1"))
+FeaturePlot(alldata, features = c("Tmem100","Ltbp4","Dkk2", "Synpo"))
+FeaturePlot(alldata, features = c("Adgrg6","Pdlim1","Htra1", "Mecom"))
+FeaturePlot(alldata, features = c("Epas1","Igfbp3","Gja4", "Unc5b"))
+FeaturePlot(alldata, features = c("Eln","Vegfc","Egfl8", "Fam174b"))
+FeaturePlot(alldata, features = c("Clec14a","Kcne3","Dkk2", "Etv2"))
+FeaturePlot(alldata, features = c("Pecam1","Tal1","Lmo2", "Bnip3"))
 
-ggsave("/Users/layteng/Downloads/Chen_2024_featureplot0.5_4.tiff", width =5, height=5)
+FeaturePlot(alldata, features = c("Unc5b","Hey1","Notch1","Nrp1","Gja5","Dll4"))
+FeaturePlot(alldata, features = c( "Nr2f2","Flrt2","Nrp2","Ephb4","Clec14a","Stab2"))
+FeaturePlot(alldata, features = c("Cdh5","Pecam1","Cd34","Smad2","Smad6", "Smad7"))
+FeaturePlot(alldata, features = c("Gja4","Sox17", "Aplnr","Efnb2","Kcne3","Bnip3"))
+
+
+library(ggplot2)
+ggsave("/Users/stanfordkevin/Downloads/FPChen_5.tiff", width =7, height=5)
 
 ```
+
+```{r}
+Arterial (Eln, Dkk2, Vegfc, and Egfl8), venous (Fam174b and Clec14a), and capillary (Kcne3
+
+VlnPlot(alldata, features = c("Unc5b","Hey1","Notch1","Nrp1","Gja5","Dll4"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+VlnPlot(alldata, features = c( "Nr2f2","Flrt2","Nrp2","Ephb4","Clec14a","Stab2"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+VlnPlot(alldata, features = c("Cdh5","Pecam1","Cd34","Smad2","Smad6", "Smad7"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+VlnPlot(alldata, features = c("Gja4","Sox17", "Aplnr","Efnb2","Kcne3","Bnip3"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+
+ggsave("/Users/stanfordkevin/Downloads/VP_Chen_4.tiff", width =7, height=5)
+                                                               
+VlnPlot(alldata, features = c("Unc5b","Hey1","Notch1","Nrp1","Gja5","Dll4","Nrp1"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+VlnPlot(alldata, features = c( "Sox17", "Aplnr", "Nr2f2","Flrt2","Nrp2","Nt5e"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+VlnPlot(alldata, features = c("Cdh5","Pecam1","Cd34","Smad2","Smad6", "Smad7"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+VlnPlot(alldata, features = c("Tmem100","Ltbp4","Dkk2", "Adgrg6","Pdlim1", "Mecom"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+VlnPlot(alldata, features = c("Epas1","Igfbp3","Gja4","Vegfc","Egfl8", "Fam174b"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+VlnPlot(alldata, features = c("Clec14a","Kcne3","Bnip3", "Etv2", "Lmo2","Tal1"), cols=c("#FFD41D","#FF5E5E","#B86FE5","#660066"))
+
+ggsave("/Users/stanfordkevin/Downloads/VP_Chen_1.tiff", width =5, height=5)
+
+VlnPlot(alldata, features = c("Gja5", "Sox17", "Aplnr", "Cxcr4", "Dll4", "Nr2f2","Cdh5","Stab2","Ccnd1","Flrt2","Nrp2"))
+
+VlnPlot(alldata, features = c("Cdh5", "Pecam1","Sox17", "Aplnr", "Dll4", "Nrp2", "Nr2f2","Nrp1","Dll4","Smad7","Klf4","Flrt2","Hey1","Notch1"))
+
+VlnPlot(alldata, features = c("Pecam1","Cdh5","Dll4","Dlk1","Pdgfrb", "Myh11", "Acta2","Actc1","Cnn1","Cdh2","Cdh3","Cdh6","Cdh19"),cols=c("#FFD41D", "#75B662", "#FF5E5E","#660066"), pt.size=1)
+
+VlnPlot(alldata, features = c("Dusp2","Axin2","Id4","Spry4", "Wnt5a", "Hey1", "Hey2"))
+ 
+VlnPlot(alldata, features = c("Dusp2","Axin2","Id4","Spry4", "Wnt5a", "Hey1", "Hey2"),cols=c("#FFD41D", "#75B662","#FF5E5E", "#660066"), pt.size=1)
+
+VlnPlot(alldata, features = c("Id1","Id2","Id3","Id4","Spry2","Spry4","Dusp1","Dusp2","Dusp3","Dusp4", "Dusp6"),cols=c("#FFD41D", "#75B662","#FF5E5E", "#660066"), pt.size=1)
+
+VlnPlot(alldata, features = c("Id4","Spry2","Spry4","Dusp2","Axin2","Notch1",,"Hey2"),cols=c("#FFD41D", "#75B662","#FF5E5E", "#660066"), pt.size=1)
+
+alldata2<-subset(alldata,idents=c("SMC","Pericyte"))
+```
+
+```{r}
+DotPlot(alldata,features=c("Pdgfrb", "Tagln", "Myh11","Acta2","Actc1","Cnn1","Lmo2","Sfrp2","Chp2","Fxyd6","Abca8a"))
+
+DotPlot(alldata,cols = c("lightgrey", "blue"),features=c("Wnt5a","Axin2","Lef1","Notch1","Nrarp", "Hes1", "Hey1", "Hey2","Id1","Id2","Id3","Id4","Spry2","Spry4","Dusp1","Dusp2","Dusp3","Dusp4", "Dusp6"))
+
+DotPlot(alldata,cols = c("lightgrey", "blue"),features=c("Pdgfrb", "Myh11", "Acta2","Actc1","Cnn1","Wnt5a","Axin2","Lef1","Notch1","Nrarp", "Hes1", "Hey1", "Hey2","Id1","Id2","Id3","Id4","Spry2","Spry4","Dusp1","Dusp2","Dusp3","Dusp4", "Dusp6"))
+    
+VlnPlot(alldata, features = c("Notch1","Nrarp", "Hes1", "Hes3", "Hes5", "Hey1", "Hey2", "Pax1","Pax9","Ctgf","Wnt5a"))
+
+VlnPlot(alldata, features = c("Cdh5","Dll4","Nr2f2","Pdgfrb", "Myh11", "Acta2", "Id1","Id2","Id3","Id4","Spry2", "Spry4","Fgf9","Fgf17", "Dusp6","Lgr5","Axin2","Lef1","Sp8","Notch1","Nrarp", "Hes1", "Hes3", "Hes5", "Hey1", "Hey2", "Pax1","Pax9","Ctgf","Wnt5a"))
+
+ggsave("/Users/stanfordkevin/Downloads/human_hou.tiff", width =5, height=5)
+```
+
 
