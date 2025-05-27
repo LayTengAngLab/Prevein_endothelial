@@ -1,0 +1,219 @@
+---
+title: "Prevein endothelial Final"
+author: "Kevin Liu"
+date: "5/19/2025"
+output: html_document
+---
+
+```{r}
+#Load datasets 
+library(Seurat)
+
+
+h1_old <- Read10X_h5("/home/ubuntu/Data_realigned/H1_old_filtered_feature_bc_matrix.h5")
+d1ps <- Read10X_h5("/home/ubuntu/Data_realigned/d1ps_filtered_feature_bc_matrix.h5")
+d2dlm <- Read10X_h5("/home/ubuntu/Data_realigned/d2dlm_filtered_feature_bc_matrix.h5")
+d3pvus <- Read10X_h5("/home/ubuntu/Data_realigned/d3pvus_filtered_feature_bc_matrix.h5")
+d3pvs <- Read10X_h5("/home/ubuntu/Data_realigned/d3pvs_filtered_feature_bc_matrix.h5")
+d4vus <- Read10X_h5("/home/ubuntu/Data_realigned/d4vus_filtered_feature_bc_matrix.h5")
+d4vs <- Read10X_h5("/home/ubuntu/Data_realigned/d4vs_filtered_feature_bc_matrix.h5")
+d3aus <- Read10X_h5("/home/ubuntu/Data_realigned/d3aus_filtered_feature_bc_matrix.h5")
+d3as <- Read10X_h5("/home/ubuntu/Data_realigned/d3as_filtered_feature_bc_matrix.h5")
+```
+
+```{r}
+#QC filter
+data.h1 <- CreateSeuratObject(h1_old, project = "h1", min.cells = 3, min.features = 200)
+data.d1ps <- CreateSeuratObject(d1ps, project = "d1ps", min.cells = 3, min.features = 200)
+data.d2dlm <- CreateSeuratObject(d2dlm, project = "d2dlm", min.cells = 3, min.features = 200)
+data.d3aus <- CreateSeuratObject(d3aus, project = "d3aus", min.cells = 3, min.features = 200)
+data.d3pvus <- CreateSeuratObject(d3pvus, project = "d3pvus", min.cells = 3, min.features = 200)
+data.d3as <- CreateSeuratObject(d3as, project = "d3as", min.cells = 3, min.features = 200)
+data.d3pvs <- CreateSeuratObject(d3pvs, project = "d3pvs", min.cells = 3, min.features = 200)
+data.d4vus <- CreateSeuratObject(d4vus, project = "d4vus", min.cells = 3, min.features = 200)
+data.d4vs <- CreateSeuratObject(d4vs, project = "d4vs", min.cells = 3, min.features = 200)
+```
+
+```{r}
+#count mito
+data.h1[["percent.mt"]] <- PercentageFeatureSet(data.h1, pattern = "^MT-")
+data.d1ps[["percent.mt"]] <- PercentageFeatureSet(data.d1ps, pattern = "^MT-")
+data.d2dlm[["percent.mt"]] <- PercentageFeatureSet(data.d2dlm, pattern = "^MT-")
+data.d3aus[["percent.mt"]] <- PercentageFeatureSet(data.d3aus, pattern = "^MT-")
+data.d3pvus[["percent.mt"]] <- PercentageFeatureSet(data.d3pvus, pattern = "^MT-")
+data.d3as[["percent.mt"]] <- PercentageFeatureSet(data.d3as, pattern = "^MT-")
+data.d3pvs[["percent.mt"]] <- PercentageFeatureSet(data.d3pvs, pattern = "^MT-")
+data.d4vus[["percent.mt"]] <- PercentageFeatureSet(data.d4vus, pattern = "^MT-")
+data.d4vs[["percent.mt"]] <- PercentageFeatureSet(data.d4vs, pattern = "^MT-")
+
+```
+
+```{r}
+#QC filter
+data.h1 <- subset(data.h1, subset = nFeature_RNA > 3750 & nFeature_RNA < 10000 & percent.mt <14 & percent.mt >4)
+data.d1ps <- subset(data.d1ps, subset = nFeature_RNA > 5000 & nFeature_RNA < 11000 & percent.mt <11 & percent.mt >5)
+data.d2dlm <- subset(data.d2dlm, subset = nFeature_RNA > 4500 & nFeature_RNA < 10000 & percent.mt <11 & percent.mt >5)
+data.d3as <- subset(data.d3as, subset = nFeature_RNA > 4500 & nFeature_RNA < 8000 & percent.mt <11 & percent.mt >5)
+data.d3pvs <- subset(data.d3pvs, subset = nFeature_RNA > 5000 & nFeature_RNA < 9000 & percent.mt <11 & percent.mt >5)
+data.d3pvus <- subset(data.d3pvus, subset = nFeature_RNA > 5000 & nFeature_RNA < 10000 & percent.mt <11 & percent.mt >5)
+data.d4vs <- subset(data.d4vs, subset = nFeature_RNA > 3750 & nFeature_RNA < 9000 & percent.mt <11 & percent.mt >5)
+data.d4vus <- subset(data.d4vus, subset = nFeature_RNA > 5000 & nFeature_RNA < 10000 & percent.mt <11 & percent.mt>5)
+data.d3aus <- subset(data.d3aus, subset = nFeature_RNA  > 5000 & nFeature_RNA <9000 & percent.mt <11 & percent.mt >5)
+
+```
+
+```{r}
+#Merge all data
+alldata <- merge(data.h1, c(
+    data.d1ps,
+    data.d2dlm,
+    data.d3pvus,
+    data.d4vus,
+    data.d3aus), 
+    add.cell.ids=c("h1","d1ps","d2dlm","d3pvus", "d4vus","d3aus"))
+
+
+alldata_sorted <- merge(data.h1, c(
+    data.d1ps,
+    data.d2dlm,
+    data.d3as,
+    data.d3pvs,
+    data.d4vs), 
+    add.cell.ids=c("h1","d1ps","d2dlm", "d3as", "d3pvs", "d4vs"))
+```
+
+```{r}
+
+alldata_sorted <- NormalizeData(alldata_sorted)
+
+#Scale
+all.genes <- rownames(alldata_sorted)
+alldata_sorted <- ScaleData(alldata_sorted, features = all.genes)
+```
+
+```{r}
+#subset based on housekeeping genes
+alldata_sorted <- subset(alldata_sorted, subset = ACTB>2)
+alldata_sorted <- subset(alldata_sorted, subset = YWHAZ>0.8) 
+```
+
+```{r}
+#Find most variable features
+alldata_sorted <- FindVariableFeatures(alldata_sorted, selection.method = "vst", nfeatures = 2000)
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(alldata_sorted), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(alldata_sorted)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot2
+```
+
+```{r}
+#Dimension reduction
+alldata_sorted <- RunPCA(alldata_sorted, npcs = 100, ndims.print = 1:5, nfeatures.print = 5)
+# Examine and visualize PCA results a few different ways
+print(alldata_sorted[["pca"]], dims = 1:5, nfeatures = 5)
+
+DimPlot(alldata_sorted, reduction = "pca")
+```
+
+```{r}
+#Sorted cell UMAP
+
+alldata_sorted <- FindNeighbors(alldata_sorted, dims = 1:20)
+alldata_sorted <- FindClusters(alldata_sorted, resolution = 0.1)
+
+alldata_sorted <- RunUMAP(alldata_sorted, dims = 1:20)
+DimPlot(alldata_sorted, reduction = "umap", label = TRUE)
+DimPlot(alldata_sorted, reduction = "umap", group.by = 'orig.ident')
+
+levels(alldata_sorted)
+levels(alldata_sorted) <- c("0", "4", "2", "5","1","3")
+levels(alldata_sorted)
+
+new.cluster.ids <- c("hESC", "PS", "DLM", "D3A", "D3PV", "D4V")
+
+names(new.cluster.ids) <- levels(alldata_sorted)
+alldata_sorted <- RenameIdents(alldata_sorted, new.cluster.ids)
+DimPlot(alldata_sorted, reduction = "umap", label = FALSE, pt.size = 0.1, cols = c("#696969", "#D0CD3E", "#F79646", "#FF0000","#8064A2", "#660066")) + NoLegend()
+
+```
+
+
+```{r}
+#Analysis of unsorted day 3 artery and d4 vein cells
+
+alldata <- NormalizeData(alldata)
+
+#Scale
+all.genes <- rownames(alldata)
+alldata <- ScaleData(alldata, features = all.genes)
+
+alldata <- subset(alldata, subset = ACTB>2)
+alldata <- subset(alldata, subset = YWHAZ>0.8) 
+
+#Find most variable features
+alldata <- FindVariableFeatures(alldata, selection.method = "vst", nfeatures = 2000)
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(alldata), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(alldata)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot2
+
+#Dimension reduction
+alldata <- RunPCA(alldata, npcs = 100, ndims.print = 1:5, nfeatures.print = 5)
+# Examine and visualize PCA results a few different ways
+print(alldata[["pca"]], dims = 1:5, nfeatures = 5)
+
+DimPlot(alldata, reduction = "pca")
+
+alldata <- FindNeighbors(alldata, dims = 1:20)
+alldata <- FindClusters(alldata, resolution = 0.14)
+
+alldata <- RunUMAP(alldata, dims = 1:20)
+DimPlot(alldata, reduction = "umap", label = TRUE)
+
+DimPlot(alldata, reduction = "umap", group.by = 'orig.ident')
+
+```
+
+
+```{r}
+#merge the two mesenchymal clusters
+new.cluster.ids <- c("0", "1", "2", "3", "4", "5", "6", "6")
+
+names(new.cluster.ids) <- levels(alldata)
+alldata <- RenameIdents(alldata, new.cluster.ids)
+
+DimPlot(alldata, reduction = "umap", label = TRUE)
+
+DimPlot(alldata, reduction = "umap", group.by = 'orig.ident')
+
+# Create named vector for new cluster names
+new.cluster.ids <- c(
+  "0" = "h1",
+  "4" = "d1ps",
+  "1" = "d2dlm",
+  "3" = "d3aus",
+  "5" = "d3pvus",
+  "2" = "d4vus",
+  "6" = "mes1",
+  "7" = "mes2"
+)
+
+# Apply new cluster names
+alldata <- RenameIdents(alldata, new.cluster.ids)
+
+DimPlot(alldata, reduction = "umap", cols = c("#696969","#D0CD3E","#F79646","#FF0404","#8468A5","#711271","#33A02C", "green"), pt.size=0.1)
+
+
+```
+
+
+```{r}
+#generate top DEGs for figure S1
+All.unsortedEC.markers <- FindAllMarkers(alldata, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+```
